@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "229801183004",
+    "firebase_url": "https://tapit-248504.firebaseio.com",
+    "project_id": "tapit-248504",
+    "storage_bucket": "tapit-248504.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229801183004:android:49898e7e7302ddcd",
+        "android_client_info": {
+          "package_name": "com.oslost.tapit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "229801183004-5ma3d4ennlg6r0s3sj26vj5nalo1hj20.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfrAA97Ov3OIIk7_vJ-7hLxdEKP_QRECY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "229801183004-5ma3d4ennlg6r0s3sj26vj5nalo1hj20.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
