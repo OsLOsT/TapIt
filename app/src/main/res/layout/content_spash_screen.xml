@@ -8,11 +8,7 @@
     android:background="@color/belizeHole"
     tools:showIn="@layout/activity_spash_screen">
 
-    <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:src="@drawable/spash_screen_icon"/>
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
