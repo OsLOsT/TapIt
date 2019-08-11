@@ -17,7 +17,6 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.Toast;
 
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -164,45 +163,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         fusedLocationProviderClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
     }
 
-    /* Checking function is used on onResume */
-    private boolean isGooglePlayServicesAvailable() {
-        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
-        int status = googleApiAvailability.isGooglePlayServicesAvailable(this);
-        if (ConnectionResult.SUCCESS == status)
-            return true;
-        else {
-            if (googleApiAvailability.isUserResolvableError(status))
-                Toast.makeText(this, "Please Install google play services to use this application", Toast.LENGTH_LONG).show();
-        }
-        return false;
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
-            if (grantResults[0] == PackageManager.PERMISSION_DENIED)
-                Toast.makeText(this, "Permission denied by uses", Toast.LENGTH_SHORT).show();
-            else if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                startCurrentLocationUpdates();
-        }
-    }
-
     /* Saving the user location in the current location object because we need the location when user tap on the current location button */
     private void animateCamera(@NonNull Location location) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(getCameraPositionWithBearing(latLng)));
     }
 
-    private void updateCamera(float bearing) {
-        CameraPosition oldPos = googleMap.getCameraPosition();
 
-        CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
-
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null);
-
-
-    }
 
     @NonNull
     private CameraPosition getCameraPositionWithBearing(LatLng latLng) {
@@ -236,9 +203,44 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    private void updateCamera(float bearing) {
+        CameraPosition oldPos = googleMap.getCameraPosition();
+
+        CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
+
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null);
 
 
+    }
 
+        /* ######################################
+                CHECK PERMISSION FUNCTION
+       ######################################*/
+
+
+    /* Checking function is used on onResume */
+    private boolean isGooglePlayServicesAvailable() {
+        GoogleApiAvailability googleApiAvailability = GoogleApiAvailability.getInstance();
+        int status = googleApiAvailability.isGooglePlayServicesAvailable(this);
+        if (ConnectionResult.SUCCESS == status)
+            return true;
+        else {
+            if (googleApiAvailability.isUserResolvableError(status))
+                Toast.makeText(this, "Please Install google play services to use this application", Toast.LENGTH_LONG).show();
+        }
+        return false;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
+            if (grantResults[0] == PackageManager.PERMISSION_DENIED)
+                Toast.makeText(this, "Permission denied by uses", Toast.LENGTH_SHORT).show();
+            else if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                startCurrentLocationUpdates();
+        }
+    }
 
     /* ######################################
                 SUPPORT FUNCTION
