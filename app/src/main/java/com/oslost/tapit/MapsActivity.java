@@ -3,7 +3,9 @@ package com.oslost.tapit;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
@@ -15,6 +17,8 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -42,15 +46,20 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+
+import java.util.Calendar;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, SensorEventListener {
 
     private GoogleMap googleMap;
     private GoogleMap mMap;
     private GPSTracker gpsTracker;
+    private static final String TAG = MapsActivity.class.getSimpleName();
+    private SharedPreferences showLocation;
 
     /* Get Current Location variable */
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 5445;
@@ -65,6 +74,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private SensorManager mSensorManager;
     private Sensor mRotVectSensor;
     private String rotatoE = "n";
+
+        /* #################################################################
+        SharedPrefs showLocation contains the following key-value pair:
+
+        - MyLocationName : <Location Name>
+        - MyLatitude : <Location Lat>
+        - MyLongitude : <Location Lng>
+
+       ################################################################# */
+
 
 
     @Override
@@ -101,11 +120,29 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+
         this.googleMap = googleMap;
+        String myLatS = loadPrefs("MyLatitude", null).trim();
+        String myLngS = loadPrefs("MyLongitude", null).trim();
+        Log.i(TAG, "LatS :" + myLatS);
+        Log.i(TAG, "LatS :" + myLngS);
+
 
        /* LatLng sp = new LatLng(1.3099, 103.7775);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sp,16)); */
 
+       if(myLatS !=null && myLngS !=null){
+           double myLat = Double.parseDouble(myLatS);
+           double myLng = Double.parseDouble(myLngS);
+           LatLng current = new LatLng(myLat,myLng);
+           Log.i(TAG, "Lat :" + myLat);
+           Log.i(TAG, "Lat :" + myLng);
+           //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current,16));
+       }
+
+
+       /* Style the map */
+        styleMyMap();
 
         /* Ground Overlay of SP */
         groundOverLaySP(this.googleMap);
@@ -116,8 +153,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     protected void onStop() {
         super.onStop();
-//        if (fusedLocationProviderClient != null)
-//            fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
+       if (fusedLocationProviderClient != null)
+            fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
     }
 
     /* Check if the user has google play services installed into their mobile phone */
@@ -155,13 +192,87 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SensorManager.getOrientation(mRotationMatrix, orientation);
             double Bearing = Math.toDegrees(orientation[0]) + mDeclination;
             float bearing = (float) Bearing;
-            if (rotatoE ==  "y") {
+            if (rotatoE == "y") {
                 if (googleMap != null) {
                     updateCamera(bearing);
                 }
             }
         }
     }
+
+    /* #############################
+            GEOFENCE FUNCTIONS
+       #############################*/
+
+
+    /* #################################################
+        SHARED PREFERENCES SAVING AND LOADING FUNCTIONS
+       ################################################# */
+
+    public void savePrefs(String key, float value){
+        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = showLocation.edit();
+        editor.putFloat(key, value);
+        editor.apply();
+    }
+
+    public void savePrefs(String key, String value){
+        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = showLocation.edit();
+        editor.putString(key, value);
+        editor.apply();
+    }
+
+    private float loadPrefs(String key, float value){
+        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        float data = showLocation.getFloat(key, value);
+        return data;
+    }
+
+    private String loadPrefs(String key, String value){
+        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String data = showLocation.getString(key, value).trim();
+        return data;
+    }
+
+    /* ###############################
+           STYLE MAP FUNCTIONS
+       ###############################*/
+    private void styleMyMap(){
+        try {
+            // Time Check for night
+            if ((getCurrentTime() < 24 && getCurrentTime() > 17) || (getCurrentTime() >= 0 && getCurrentTime() < 7)) {
+                boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_night));
+
+                if (!success) {
+                    Log.e(TAG, "Style parsing failed.");
+                }
+            } else {
+                // Time for morning
+                boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_morning));
+
+                if (!success) {
+                    Log.e(TAG, "Style parsing failed.");
+                }
+
+            }
+
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
+    }
+
+    /* ###############################
+           GET 24HR TIME FUNCTIONS
+       ###############################*/
+
+    public int getCurrentTime() {
+        Calendar calendar = Calendar.getInstance();
+        int timeHour = calendar.get(Calendar.HOUR_OF_DAY);
+        return timeHour;
+
+    }
+
 
      /* #################################################
                 CALLBACK FUNCTIONS
@@ -181,7 +292,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             currentLocation = locationResult.getLastLocation();
             if (firstTimeFlag && googleMap != null) {
                 rotatoE = "n";
-                animateCamera(currentLocation);
+               // animateCamera(currentLocation);
                 firstTimeFlag = false;
             }
             showMarker(currentLocation);
@@ -197,7 +308,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         public void onClick(View view) {
             rotatoE = "n";
             if (view.getId() == R.id.currentLocationImageButton && googleMap != null && currentLocation != null) {
-                MapsActivity.this.animateCamera(currentLocation);
+               // MapsActivity.this.animateCamera(currentLocation);
             }
         }
     };
@@ -329,7 +440,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
 
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null );
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null);
 
 
     }

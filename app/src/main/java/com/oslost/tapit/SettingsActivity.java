@@ -154,8 +154,8 @@ public class SettingsActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), address.getLatitude() + " " + address.getLongitude(), Toast.LENGTH_LONG).show();
 
                     /* Store the updated address into the static variable */
-                    showLocation.edit().putFloat("MyLatitude", (float) address.getLatitude());
-                    showLocation.edit().putFloat("MyLongitude", (float) address.getLongitude());
+                    showLocation.edit().putString("MyLatitude", String.valueOf(address.getLatitude())).apply();
+                    showLocation.edit().putString("MyLongitude", String.valueOf(address.getLongitude())).apply();
 
                 } else {
                     Toast.makeText(this, "Location does not exist, please enter something else.", Toast.LENGTH_SHORT).show();
