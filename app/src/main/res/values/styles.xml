@@ -11,13 +11,16 @@
     <!-- Spash Screen Theme -->
     <style name="SpashScreenTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@drawable/spash_screen_icon</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:statusBarColor">@color/belizeHole</item>
     </style>
 
     <!-- Hide the action bar-->
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
-        <!--item name="android:statusBarColor">@android:color/transparent</item-->
+        <item name="android:statusBarColor">@color/midnightBlue</item>
     </style>
 
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

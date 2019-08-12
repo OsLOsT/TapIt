@@ -24,7 +24,12 @@ public class SettingsActivity extends AppCompatActivity {
         Menu menu = bottomNav.getMenu();
         MenuItem menuItem = menu.getItem(2);
         menuItem.setChecked(true);
+
+
+
     }
+
+
 
     /* ############################################
             BOTTOM NAVIGATION VIEW FUNCTION

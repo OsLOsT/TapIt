@@ -18,6 +18,8 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -64,14 +66,39 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     float mDeclination;
     private SensorManager mSensorManager;
     private Sensor mRotVectSensor;
+    private String rotatoE = "n";
 
     private final View.OnClickListener clickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
-            if (view.getId() == R.id.currentLocationImageButton && googleMap != null && currentLocation != null)
+            rotatoE = "n";
+            if (view.getId() == R.id.currentLocationImageButton && googleMap != null && currentLocation != null) {
                 MapsActivity.this.animateCamera(currentLocation);
+            }
         }
     };
+
+    void yes() {
+        Toast.makeText(this, "Enabled automatic map reorientation.", Toast.LENGTH_SHORT).show();
+    }
+
+    void no() {
+        Toast.makeText(this, "Disabled auto map reorientation.", Toast.LENGTH_SHORT).show();
+    }
+
+    private View.OnClickListener compass = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (rotatoE == "y") {
+                rotatoE = "n";
+                no();
+            } else if (rotatoE == "n") {
+                rotatoE = "y";
+                yes();
+            }
+        }
+    };
+
 
     /* LocationCallback class object which we’re passing in when requesting location updates.
      * FirstTime flag is user. If it is true and googleMap instance is not null. It is because when the app opends, we need to animate googleMaps to user
@@ -85,6 +112,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (locationResult.getLastLocation() == null)
                 return;
             currentLocation = locationResult.getLastLocation();
+            rotatoE = "n";
             if (firstTimeFlag && googleMap != null) {
                 animateCamera(currentLocation);
                 firstTimeFlag = false;
@@ -105,6 +133,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+
+        /* Compass Enable click Listender */
+        findViewById(R.id.compassEnableButton).setOnClickListener(compass);
 
         /* Set Listener for the current location button */
         findViewById(R.id.currentLocationImageButton).setOnClickListener(clickListener);
@@ -193,13 +224,26 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /* Saving the user location in the current location object because we need the location when user tap on the current location button */
     private void animateCamera(@NonNull Location location) {
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(getCameraPositionWithBearing(latLng)));
+
+        GoogleMap.CancelableCallback cancelableCallback = new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                rotatoE = "y";
+                yes();
+            }
+
+            @Override
+            public void onCancel() {
+                /* Do nothing. I just want the onFinish thingy */
+            }
+        };
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(getCameraPositionWithBearing(latLng)), cancelableCallback);
     }
 
 
     @NonNull
     private CameraPosition getCameraPositionWithBearing(LatLng latLng) {
-        return new CameraPosition.Builder().target(latLng).build();
+        return new CameraPosition.Builder().target(latLng).zoom(16).build();
     }
 
 
@@ -221,9 +265,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             SensorManager.getOrientation(mRotationMatrix, orientation);
             double Bearing = Math.toDegrees(orientation[0]) + mDeclination;
             float bearing = (float) Bearing;
-
-            if (googleMap != null) {
-                updateCamera(bearing);
+            if (rotatoE ==  "y") {
+                if (googleMap != null) {
+                    updateCamera(bearing);
+                }
             }
         }
     }
@@ -233,7 +278,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
 
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null);
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null );
 
 
     }
@@ -285,7 +330,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         groundOverlayOptions.transparency(0.2f);
         groundOverlayOptions.visible(true);
 
-        mMap.addGroundOverlay(groundOverlayOptions);
+        // mMap.addGroundOverlay(groundOverlayOptions);
 
 
     }
