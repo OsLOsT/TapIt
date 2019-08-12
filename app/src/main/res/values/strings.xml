@@ -2,5 +2,7 @@
     <string name="app_name">TapIt!</string>
     <string name="title_activity_maps">Map</string>
     <string name="settings">Settings</string>
-    <string name="AI">AI</string>
+    <string name="AI">AI work in Progress</string>
+    <string name="find_water_cooler">Find Water Cooler</string>
+    <string name="update_address">Update Address</string>
 </resources>

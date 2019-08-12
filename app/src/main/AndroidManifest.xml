@@ -15,15 +15,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".AiActivity"></activity>
-        <activity android:name=".SettingsActivity" /> <!-- Google Maps -->
+
+        <!-- Google Maps -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="@string/google_maps_key" />
 
-        <activity
-            android:name=".MapsActivity"
-            android:label="@string/title_activity_maps" /> <!-- Splash Screen -->
+        <!-- Splash Screen -->
         <activity
             android:name=".SpashScreenActivity"
             android:theme="@style/SpashScreenTheme">
@@ -33,6 +31,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".MapsActivity"
+            android:label="@string/title_activity_maps"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity
+            android:name=".AiActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+
     </application>
 
 </manifest>

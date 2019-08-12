@@ -2,6 +2,7 @@ package com.oslost.tapit;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -14,6 +15,8 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
@@ -36,13 +39,18 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.GroundOverlayOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, SensorEventListener{
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, SensorEventListener {
 
     private GoogleMap googleMap;
+    private GoogleMap mMap;
+    private GPSTracker gpsTracker;
 
     /* Get Current Location variable */
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 5445;
@@ -91,6 +99,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
+        GPSTracker gpsTracker = new GPSTracker(this);
+
         /* Obtain the SupportMapFragment and get notified when the map is ready to be used. */
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -101,6 +111,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mRotVectSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+
+        /* Bottom Navigation View with Activity */
+        BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        bottomNav.setOnNavigationItemSelectedListener(navListener);
+        Menu menu = bottomNav.getMenu();
+        MenuItem menuItem = menu.getItem(0);
+        menuItem.setChecked(true);
+
+
     }
 
 
@@ -108,13 +127,21 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         this.googleMap = googleMap;
 
+       /* LatLng sp = new LatLng(1.3099, 103.7775);
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sp,16)); */
+
+
+        /* Ground Overlay of SP */
+        groundOverLaySP(this.googleMap);
+
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        if (fusedLocationProviderClient != null)
-            fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
+//        if (fusedLocationProviderClient != null)
+//            fusedLocationProviderClient.removeLocationUpdates(mLocationCallback);
     }
 
     /* Check if the user has google play services installed into their mobile phone */
@@ -170,12 +197,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-
     @NonNull
     private CameraPosition getCameraPositionWithBearing(LatLng latLng) {
-        return new CameraPosition.Builder().target(latLng).zoom(16).build();
+        return new CameraPosition.Builder().target(latLng).build();
     }
-
 
 
     private void showMarker(@NonNull Location currentLocation) {
@@ -212,6 +237,59 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
 
     }
+
+      /* ############################################
+            BOTTOM NAVIGATION VIEW FUNCTION
+       ############################################*/
+
+    private BottomNavigationView.OnNavigationItemSelectedListener navListener =
+            new BottomNavigationView.OnNavigationItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                    //Activity selectedActivity = null;
+
+                    switch (item.getItemId()) {
+                        case R.id.nav_map:
+                            break;
+                        case R.id.nav_ai:
+                            Intent iai = new Intent(getApplicationContext(), AiActivity.class);
+                            startActivity(iai);
+                            break;
+                        case R.id.nav_settings:
+                            Intent isettings = new Intent(getApplicationContext(), SettingsActivity.class);
+                            startActivity(isettings);
+                            break;
+                    }
+
+                    return true;
+                }
+            };
+
+    /* ############################################
+         GROUND OVER LAY SP MAP FUNCTION
+     ############################################*/
+    private void groundOverLaySP(GoogleMap googleMap) {
+
+        mMap = googleMap;
+        BitmapDescriptor spBitmap = BitmapDescriptorFactory.fromResource(R.raw.resizedmap);
+
+        LatLng southWest = new LatLng(1.1826, 103.4619);
+        LatLng NorthEast = new LatLng(1.1842, 103.4657);
+
+        LatLngBounds latLngBounds = new LatLngBounds(southWest, NorthEast);
+
+        GroundOverlayOptions groundOverlayOptions = new GroundOverlayOptions();
+        groundOverlayOptions.positionFromBounds(latLngBounds);
+        groundOverlayOptions.bearing(-21.0694f);
+        groundOverlayOptions.image(spBitmap);
+        groundOverlayOptions.transparency(0.2f);
+        groundOverlayOptions.visible(true);
+
+        mMap.addGroundOverlay(groundOverlayOptions);
+
+
+    }
+
 
         /* ######################################
                 CHECK PERMISSION FUNCTION
@@ -266,10 +344,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         /* To not make my class and abstract one I will implement and empty method signature from the interface SensorEventListener */
     }
-
-
-
-
 
 
 }

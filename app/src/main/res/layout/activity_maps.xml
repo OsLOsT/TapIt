@@ -4,7 +4,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-
     tools:context=".MapsActivity">
 
     <fragment
@@ -25,6 +24,20 @@
         android:contentDescription="@null"
         android:background="@drawable/roundedcorner"
         android:src="@drawable/currentlocation_button" />
+
+    <Button
+        android:id="@+id/closest_waterCooler"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_above="@id/bottom_navigation"
+        android:layout_marginBottom="23dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/find_water_cooler"
+        android:textColor="@color/clouds"
+        android:fontFamily="sans-serif-medium"
+        android:textStyle="bold"
+        android:background="@drawable/roundedcorner_text"/>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
