@@ -18,8 +18,6 @@ import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -67,59 +65,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private SensorManager mSensorManager;
     private Sensor mRotVectSensor;
     private String rotatoE = "n";
-
-    private final View.OnClickListener clickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View view) {
-            rotatoE = "n";
-            if (view.getId() == R.id.currentLocationImageButton && googleMap != null && currentLocation != null) {
-                MapsActivity.this.animateCamera(currentLocation);
-            }
-        }
-    };
-
-    void yes() {
-        Toast.makeText(this, "Enabled automatic map reorientation.", Toast.LENGTH_SHORT).show();
-    }
-
-    void no() {
-        Toast.makeText(this, "Disabled auto map reorientation.", Toast.LENGTH_SHORT).show();
-    }
-
-    private View.OnClickListener compass = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (rotatoE == "y") {
-                rotatoE = "n";
-                no();
-            } else if (rotatoE == "n") {
-                rotatoE = "y";
-                yes();
-            }
-        }
-    };
-
-
-    /* LocationCallback class object which we’re passing in when requesting location updates.
-     * FirstTime flag is user. If it is true and googleMap instance is not null. It is because when the app opends, we need to animate googleMaps to user
-     * current locaiton.*/
-
-    private final LocationCallback mLocationCallback = new LocationCallback() {
-
-        @Override
-        public void onLocationResult(LocationResult locationResult) {
-            super.onLocationResult(locationResult);
-            if (locationResult.getLastLocation() == null)
-                return;
-            currentLocation = locationResult.getLastLocation();
-            rotatoE = "n";
-            if (firstTimeFlag && googleMap != null) {
-                animateCamera(currentLocation);
-                firstTimeFlag = false;
-            }
-            showMarker(currentLocation);
-        }
-    };
 
 
     @Override
@@ -201,61 +146,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         googleMap = null;
     }
 
-
-    /* Location Request is to tell how much time interval we need after every location
-     *  We also can set the location Accuracy with the location Request which we set to high accuracy
-     *  One more thing that we are checking is also if the user has enabled the location permission or now*/
-
-    private void startCurrentLocationUpdates() {
-        LocationRequest locationRequest = LocationRequest.create();
-        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(3000);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MapsActivity.this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-                return;
-            }
-        }
-        fusedLocationProviderClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
-    }
-
-    /* Saving the user location in the current location object because we need the location when user tap on the current location button */
-    private void animateCamera(@NonNull Location location) {
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-
-        GoogleMap.CancelableCallback cancelableCallback = new GoogleMap.CancelableCallback() {
-            @Override
-            public void onFinish() {
-                rotatoE = "y";
-                yes();
-            }
-
-            @Override
-            public void onCancel() {
-                /* Do nothing. I just want the onFinish thingy */
-            }
-        };
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(getCameraPositionWithBearing(latLng)), cancelableCallback);
-    }
-
-
-    @NonNull
-    private CameraPosition getCameraPositionWithBearing(LatLng latLng) {
-        return new CameraPosition.Builder().target(latLng).zoom(16).build();
-    }
-
-
-    private void showMarker(@NonNull Location currentLocation) {
-        LatLng latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-        if (currentLocationMarker == null)
-            currentLocationMarker = googleMap.addMarker(new MarkerOptions().icon(bitmapDescriptorFromVector(this, R.drawable.currentlocation_marker)).position(latLng));
-        else {
-            MarkerAnimation.animateMarkerToGB(currentLocationMarker, latLng, new LatLngInterpolator.Spherical());
-        }
-    }
-
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ROTATION_VECTOR) {
@@ -273,15 +163,57 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    private void updateCamera(float bearing) {
-        CameraPosition oldPos = googleMap.getCameraPosition();
+     /* #################################################
+                CALLBACK FUNCTIONS
+       #################################################*/
 
-        CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
+    /* LocationCallback class object which we’re passing in when requesting location updates.
+     * FirstTime flag is user. If it is true and googleMap instance is not null. It is because when the app opends, we need to animate googleMaps to user
+     * current locaiton.*/
 
-        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null );
+    private final LocationCallback mLocationCallback = new LocationCallback() {
 
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            super.onLocationResult(locationResult);
+            if (locationResult.getLastLocation() == null)
+                return;
+            currentLocation = locationResult.getLastLocation();
+            if (firstTimeFlag && googleMap != null) {
+                rotatoE = "n";
+                animateCamera(currentLocation);
+                firstTimeFlag = false;
+            }
+            showMarker(currentLocation);
+        }
+    };
 
-    }
+     /* #################################################
+                ON CLICK LISTENER FUNCTIONS
+       #################################################*/
+
+    private final View.OnClickListener clickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            rotatoE = "n";
+            if (view.getId() == R.id.currentLocationImageButton && googleMap != null && currentLocation != null) {
+                MapsActivity.this.animateCamera(currentLocation);
+            }
+        }
+    };
+
+    private View.OnClickListener compass = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (rotatoE == "y") {
+                rotatoE = "n";
+                no();
+            } else if (rotatoE == "n") {
+                rotatoE = "y";
+                yes();
+            }
+        }
+    };
 
       /* ############################################
             BOTTOM NAVIGATION VIEW FUNCTION
@@ -310,9 +242,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
             };
 
-    /* ############################################
-         GROUND OVER LAY SP MAP FUNCTION
-     ############################################*/
+    /* ################################################
+         GROUND OVER LAY SP MAP FUNCTION [NOT WORKING]
+     ##################################################*/
     private void groundOverLaySP(GoogleMap googleMap) {
 
         mMap = googleMap;
@@ -335,8 +267,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
-
-        /* ######################################
+    /* ######################################
                 CHECK PERMISSION FUNCTION
        ######################################*/
 
@@ -369,7 +300,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 SUPPORT FUNCTION
        ######################################*/
 
-
     /* Convert vector based xml to bitmap so that it can be shown on google map */
     private BitmapDescriptor bitmapDescriptorFromVector(Context context, int vectorResId) {
         Drawable vectorDrawable = ContextCompat.getDrawable(context, vectorResId);
@@ -378,6 +308,88 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         Canvas canvas = new Canvas(bitmap);
         vectorDrawable.draw(canvas);
         return BitmapDescriptorFactory.fromBitmap(bitmap);
+    }
+
+    /* ######################################
+           ORIENT MAP WITH PHONE FUNCTION
+       ######################################*/
+
+    /* Toast function for rotato enable/disable */
+    void yes() {
+        Toast.makeText(this, "Enabled automatic map reorientation.", Toast.LENGTH_SHORT).show();
+    }
+
+    void no() {
+        Toast.makeText(this, "Disabled auto map reorientation.", Toast.LENGTH_SHORT).show();
+    }
+
+    /* For rotatoE */
+    private void updateCamera(float bearing) {
+        CameraPosition oldPos = googleMap.getCameraPosition();
+
+        CameraPosition pos = CameraPosition.builder(oldPos).bearing(bearing).build();
+
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(pos), 200, null );
+
+
+    }
+
+    /* ######################################
+               CURRENT LOCATION FUNCTION
+       ######################################*/
+
+    @NonNull
+    private CameraPosition getCameraPositionWithBearing(LatLng latLng) {
+        return new CameraPosition.Builder().target(latLng).zoom(16).build();
+    }
+
+
+    private void showMarker(@NonNull Location currentLocation) {
+        LatLng latLng = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+        if (currentLocationMarker == null)
+            currentLocationMarker = googleMap.addMarker(new MarkerOptions().icon(bitmapDescriptorFromVector(this, R.drawable.currentlocation_marker)).position(latLng));
+        else {
+            MarkerAnimation.animateMarkerToGB(currentLocationMarker, latLng, new LatLngInterpolator.Spherical());
+        }
+    }
+
+    /* Location Request is to tell how much time interval we need after every location
+     *  We also can set the location Accuracy with the location Request which we set to high accuracy
+     *  One more thing that we are checking is also if the user has enabled the location permission or now*/
+
+    private void startCurrentLocationUpdates() {
+        LocationRequest locationRequest = LocationRequest.create();
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        locationRequest.setInterval(3000);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MapsActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+                return;
+            }
+        }
+        fusedLocationProviderClient.requestLocationUpdates(locationRequest, mLocationCallback, Looper.myLooper());
+    }
+
+
+    /* Saving the user location in the current location object because we need the location when user tap on the current location button */
+    private void animateCamera(@NonNull Location location) {
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        GoogleMap.CancelableCallback cancelableCallback = new GoogleMap.CancelableCallback() {
+            @Override
+            public void onFinish() {
+                rotatoE = "y";
+                yes();
+            }
+
+            @Override
+            public void onCancel() {
+                /* Do nothing. I just want the onFinish thingy */
+            }
+        };
+        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(getCameraPositionWithBearing(latLng)), cancelableCallback);
     }
 
 

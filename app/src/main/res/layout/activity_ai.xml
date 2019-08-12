@@ -7,12 +7,78 @@
     android:background="@color/midnightBlue"
     tools:context=".AiActivity">
 
-    <TextView
+    <!--TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/AI_down"
         android:textColor="@color/clouds"
-        android:layout_centerInParent="true"/>
+        android:layout_centerInParent="true"/-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/clouds"
+            android:textStyle="normal"
+            android:text="@string/bottleDrank"/>
+
+        <EditText
+            android:id="@+id/bottleDrink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="@color/clouds"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/clouds"
+            android:textStyle="normal"
+            android:text="@string/bottleVolume"/>
+
+        <EditText
+            android:id="@+id/bottleVol"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:textColor="@color/clouds"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/clouds"
+            android:textStyle="normal"
+            android:text="@string/bottleTime"/>
+
+        <EditText
+            android:id="@+id/bottleTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="time"
+            android:textColor="@color/clouds"/>
+
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/closest_waterCooler"
+        android:layout_width="100dp"
+        android:layout_height="50dp"
+        android:layout_above="@id/bottom_navigation"
+        android:layout_marginBottom="23dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:text="@string/train_model"
+        android:textColor="@color/clouds"
+        android:fontFamily="sans-serif-medium"
+        android:textStyle="bold"
+        android:background="@drawable/roundedcorner_text"/>
+
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"

@@ -31,7 +31,9 @@
             android:id="@+id/editAddress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/enter_here"/>
+            android:hint="@string/enter_here"
+            android:textColorHint="@color/clouds"
+            android:textColor="@color/clouds"/>
 
         <Button
             android:id="@+id/updateAddress"
@@ -43,6 +45,7 @@
             android:text="@string/update_address"
             android:textColor="@color/clouds"
             android:textStyle="bold"
+            android:inputType="textPostalAddress"
             android:background="@drawable/roundedcorner_text"/>
 
 

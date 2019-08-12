@@ -1,10 +1,27 @@
 <resources>
     <string name="app_name">TapIt!</string>
+
+    <!-- BOTTOM NAVIGATION -->
     <string name="title_activity_maps">Map</string>
     <string name="settings">Settings</string>
     <string name="AI">AI</string>
     <string name="AI_down">AI work in Progress</string>
+
+    <!-- MAP -->
     <string name="find_water_cooler">Find Water Cooler</string>
+
+    <!-- SETTINGS -->
     <string name="update_address">Update Address</string>
+
+    <!-- AI -->
+    <string name="bottleDrank">Total bottle drink (int): </string>
+    <string name="bottleVolume">Volume of  bottle (ml): </string>
+    <string name="bottleTime">Time drink (24hr): </string>
     <string name="enter_here">Enter Here</string>
+    <string name="train_model">Train</string>
+
+    <!-- SHARED PREFERENCES -->
+    <string name="locationAddress">Location</string>
+
+
 </resources>
