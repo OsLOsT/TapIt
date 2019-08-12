@@ -1,4 +1,4 @@
-# TapIt
+# TapIt 
 
 This is an application to show all the water coolers that is available in SP.
 As of now, for proof of concept, the water coolers that I will display will only be the area between t12 and t15.
@@ -22,7 +22,7 @@ Flow of the whole App:
 
 + 2.2 When user tap on the marker itself, it will pop out a window with picture and the location displayed of the water cooler
 
-3. **AI Acitivty** User has to manually enter their data with the following parameter - date( **set the first date as day 1**), amount of water refill. 
+3. **AI Acitivty** User has to manually enter their data with the following parameter - date( **set the first date as day 1**), amount of water refill. **[PROBABLY NO TIME TO IMPLEMENT]**
 
 + 3.1 Click the button - "save and train" to train the model.
 
