@@ -23,5 +23,9 @@
     <!-- SHARED PREFERENCES -->
     <string name="locationAddress">Location</string>
 
+    <!-- FIRST TIMER -->
+    <string name="enter_address">Enter your address</string>
+    <string name="add_address">Add Address</string>
+
 
 </resources>

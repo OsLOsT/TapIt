@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -31,6 +30,9 @@ public class SettingsActivity extends AppCompatActivity {
     private String location;
     private SharedPreferences showLocation;
     private Context context;
+    private Intent mapIntent;
+
+    private static final String TAG = MapsActivity.class.getSimpleName();
 
     /* #################################################################
         SharedPrefs showLocation contains the following key-value pair:
@@ -38,6 +40,7 @@ public class SettingsActivity extends AppCompatActivity {
         - MyLocationName : <Location Name>
         - MyLatitude : <Location Lat>
         - MyLongitude : <Location Lng>
+        - FirstTime : <Boolean FirsTime>
 
        ################################################################# */
 
@@ -69,28 +72,36 @@ public class SettingsActivity extends AppCompatActivity {
         SHARED PREFERENCES SAVING AND LOADING FUNCTIONS
        ################################################# */
 
-    public void savePrefs(String key, float value){
-        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    public void savePrefs(String key, float value) {
+        context = getApplicationContext();
+        showLocation = context.getSharedPreferences("db", MODE_PRIVATE);
+        //showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = showLocation.edit();
         editor.putFloat(key, value);
         editor.apply();
     }
 
-    public void savePrefs(String key, String value){
-        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    public void savePrefs(String key, String value) {
+        context = getApplicationContext();
+        showLocation = context.getSharedPreferences("db", MODE_PRIVATE);
+        //showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         SharedPreferences.Editor editor = showLocation.edit();
         editor.putString(key, value);
         editor.apply();
     }
 
-    private float loadPrefs(String key, float value){
-        showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    private float loadPrefs(String key, float value) {
+        context = getApplicationContext();
+        showLocation = context.getSharedPreferences("db", MODE_PRIVATE);
+        //showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         float data = showLocation.getFloat(key, value);
         return data;
     }
 
-    private String loadPrefs(String key, String value){
-       showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+    private String loadPrefs(String key, String value) {
+        context = getApplicationContext();
+        showLocation = context.getSharedPreferences("db", MODE_PRIVATE);
+        //showLocation = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         String data = showLocation.getString(key, value);
         return data;
     }
@@ -114,6 +125,12 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             onSearchLocation(v);
+            mapIntent = new Intent(getApplicationContext() , MapsActivity.class);
+            mapIntent.putExtra("myLat", loadPrefs("MyLatitude", null));
+            mapIntent.putExtra("myLng", loadPrefs("MyLongitude", null));
+            Toast.makeText(getApplicationContext(), "Put Extra for intent done", Toast.LENGTH_SHORT).show();
+            startActivity(mapIntent);
+
         }
     };
 
@@ -125,8 +142,8 @@ public class SettingsActivity extends AppCompatActivity {
     public void onSearchLocation(View view) {
 
         location = onSearch.getText().toString();
-        savePrefs("MyLocationName", onSearch.getText().toString().toUpperCase());
         if (onSearch != null) {
+            savePrefs("MyLocationName", onSearch.getText().toString().toUpperCase());
             List<Address> addressList = null;
             if (location != null || !location.equals("")) {
                 Geocoder geocoder = new Geocoder(this);
