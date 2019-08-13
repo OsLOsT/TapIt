@@ -235,6 +235,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
        ###################################*/
 
     private void setUpAddress() {
+        /*TODO: IMPT SET ADDDRESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS*/
         /* Run this function only and IF ONLY the user really launch the app for the first time */
         if (loadPrefs("FirstTime", true)) {
             savePrefs("FirstTime", false);
