@@ -28,4 +28,4 @@ Flow of the whole App:
 
 + 3.2 Model will predict when the user is going to drink water and remind them to **refill** their water bottle
 
-4. **Change location activtiy** Give user the chance to change their home location.
+4. **Change location activtiy** Give user the chance to change their home location. **[DONE]**
