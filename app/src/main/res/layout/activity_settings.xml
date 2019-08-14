@@ -20,20 +20,29 @@
         android:orientation="vertical">
 
         <TextView
+            android:paddingBottom="25dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:text="Enter New Address"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
             android:textColor="@color/clouds"
             android:textStyle="bold" />
 
         <EditText
             android:id="@+id/editAddress"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
+            android:background="@drawable/rounded_border_edittext"
+            android:gravity="center"
+            android:layout_gravity="center"
             android:hint="@string/enter_here"
-            android:textColorHint="@color/clouds"
-            android:textColor="@color/clouds"/>
+            android:textColorHint="@color/asbestos"
+            android:textColor="@color/midnightBlue"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="25dp" />
 
         <Button
             android:id="@+id/updateAddress"
@@ -46,7 +55,8 @@
             android:textColor="@color/clouds"
             android:textStyle="bold"
             android:inputType="textPostalAddress"
-            android:background="@drawable/roundedcorner_text"/>
+            android:background="@drawable/roundedcorner_text"
+            />
 
 
     </LinearLayout>

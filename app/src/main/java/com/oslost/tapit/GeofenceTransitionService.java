@@ -88,14 +88,13 @@ public class GeofenceTransitionService extends IntentService {
         status = null;
         if (geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
             /*TODO: DELETE THIS LATER STRICTLY FOR BETA TESTING*/
-
             status = "You are already home! ";
-            Toast.makeText(this, "You entered your home", Toast.LENGTH_SHORT).show();
             Log.i(TAG, "GEOFENCE IS ENTERING");
 
 
         } else if (geoFenceTransition == Geofence.GEOFENCE_TRANSITION_EXIT) {
             status = "Did you remember to bring along your water bottle ? ";
+
             /*TODO: DELETE THIS LATER */
             Log.i(TAG, "GEOFENCE IS EXITING");
 

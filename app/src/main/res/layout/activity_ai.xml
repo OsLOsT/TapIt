@@ -21,44 +21,70 @@
         android:layout_centerInParent="true">
 
         <TextView
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/clouds"
             android:textStyle="normal"
-            android:text="@string/bottleDrank"/>
+            android:gravity="center"
+            android:text="@string/bottleDrank"
+            android:paddingBottom="15dp"/>
 
         <EditText
             android:id="@+id/bottleDrink"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
+            android:background="@drawable/rounded_border_edittext"
+            android:gravity="center"
+            android:layout_gravity="center"
             android:inputType="number"
             android:textColor="@color/clouds"/>
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="25dp" />
+
         <TextView
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/clouds"
             android:textStyle="normal"
-            android:text="@string/bottleVolume"/>
+            android:text="@string/bottleVolume"
+            android:paddingBottom="15dp"/>
 
         <EditText
             android:id="@+id/bottleVol"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
+            android:background="@drawable/rounded_border_edittext"
+            android:gravity="center"
+            android:layout_gravity="center"
             android:inputType="number"
             android:textColor="@color/clouds"/>
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="25dp" />
+
         <TextView
+            android:gravity="center"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/clouds"
             android:textStyle="normal"
-            android:text="@string/bottleTime"/>
+            android:text="@string/bottleTime"
+            android:paddingBottom="15dp"/>
 
         <EditText
             android:id="@+id/bottleTime"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="50dp"
+            android:background="@drawable/rounded_border_edittext"
+            android:gravity="center"
+            android:layout_gravity="center"
             android:inputType="time"
             android:textColor="@color/clouds"/>
 

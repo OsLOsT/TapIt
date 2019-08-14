@@ -5,7 +5,8 @@
       1.3109,
       103.7784
     ],
-    "picture": "R.raw.t12a_boys_toilet"
+    "Location": "T12A first floor boys toilet",
+    "Tag": 1
   },
   {
     "name": "T12A Girls Toilet",
@@ -13,7 +14,8 @@
       1.3102,
       103.7784
     ],
-    "picture": "132"
+    "Location": "T12A first floor girls toilet",
+    "Tag": 2
   },
   {
     "name": "Below Spectrum",
@@ -21,6 +23,7 @@
       1.3102,
       103.7785
     ],
-    "picture": "R.raw.below_spectrum"
+    "Location": "Literally below spectrum",
+    "Tag": 3
   }
 ]

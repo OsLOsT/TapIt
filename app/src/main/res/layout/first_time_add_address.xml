@@ -4,28 +4,33 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="8dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginBottom="8dp"
-    android:padding="8dp"
-    android:background="@color/jigglypuff">
+    android:background="@color/midnightBlue">
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+        android:paddingBottom="25dp"
         android:text="@string/enter_address"
         android:textAlignment="center"
-        android:textColor="@color/midnightBlue"
+        android:textColor="@color/clouds"
         android:textStyle="bold"/>
 
     <EditText
         android:id="@+id/new_address_text"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
+        android:background="@drawable/rounded_border_edittext"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:textColor="@color/midnightBlue"
         android:inputType="textPostalAddress"
-        android:hint="@string/enter_address"/>
+        android:hint="@string/enter_address"
+        android:textColorHint="@color/asbestos"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="25dp" />
 
     <Button
         android:id="@+id/new_address_button"

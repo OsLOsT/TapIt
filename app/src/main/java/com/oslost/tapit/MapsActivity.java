@@ -29,6 +29,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -65,8 +67,14 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.List;
 
@@ -75,7 +83,6 @@ import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, SensorEventListener {
 
     private GoogleMap googleMap;
-    private GPSTracker gpsTracker;
     private static final String TAG = MapsActivity.class.getSimpleName();
     private SharedPreferences showLocation;
     private Context context;
@@ -94,7 +101,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Marker searchMarker;
     private static final long GEO_DURATION = NEVER_EXPIRE;
     private static final String GEOFENCE_REQ_ID = "Your Destination";
-    private static final float GEOFENCE_RADIUS = 100.0f; // in meters
+    private static final float GEOFENCE_RADIUS = 20.0f; // in meters
     private static final int ME_WANT_NO_INITIAL_TRIGGER = 0;
     private boolean checkPermission = false;
     //private String geofenceallowed = "n";
@@ -120,6 +127,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Sensor mRotVectSensor;
     private String rotatoE = "n";
 
+    /* JSON variables */
+    private String json;
+    private Marker mClosestMarker;
+    private float mindist;
+    private double gpsLat;
+    private double gpsLon;
+
         /* #################################################################
         SharedPrefs showLocation contains the following key-value pair:
 
@@ -127,6 +141,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         - MyLatitude : <Location Lat>
         - MyLongitude : <Location Lng>
         - FirstTime : <Boolean FirsTime>
+        - CurrentLatitude : < Location Lat>
+        - CurrentLongitude : < Location Lng>
 
        ################################################################# */
 
@@ -143,8 +159,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-
-        GPSTracker gpsTracker = new GPSTracker(this);
 
         /* Initialise geofencing client with this activity */
         geofencingClient = LocationServices.getGeofencingClient(this);
@@ -182,6 +196,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         this.googleMap = googleMap;
 
+
         /* Check if it is first time user */
         setUpAddress();
 
@@ -194,11 +209,73 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         /* Ground Overlay of SP */
         groundOverLaySP();
 
-        /* TODO: DELETE LATER */
-        //testingMyStuff();
+        /* Style your map */
+        styleMyMap();
+
+
+        /* Parse JSON file as String */
+        parsingJson();
+
+        /* On marker Click */
+        spawnAlertDialogforWaterCooler();
 
 
     }
+
+    /* #################################
+             PARSING JSON FUNCTIONS
+       #################################*/
+    private void parsingJson() {
+        try {
+            InputStream inputStream = getAssets().open("water_coolers.json");
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
+
+            json = new String(buffer, "UTF-8");
+            JSONArray jsonArray = new JSONArray(json);
+
+            createMarkersFromJson(jsonArray);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.i(TAG, "Createmarkers with json has error");
+        }
+
+    }
+
+    /* #################################################
+           CREATING MARKER FOR WATER COOLER FUNCTIONS
+       #################################################*/
+
+    void createMarkersFromJson(JSONArray jsonArray) throws JSONException {
+
+        // De-serialize the JSON string into an array of city objects
+        for (int i = 0; i < jsonArray.length(); i++) {
+
+            // Create a marker for each city in the JSON data.
+            JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+            /* Get the latLong of each water cooler */
+            double lat = jsonObject.getJSONArray("latlng").getDouble(0);
+            double lon = jsonObject.getJSONArray("latlng").getDouble(1);
+
+            LatLng position = new LatLng(lat, lon);
+            Log.i(TAG, "json lat:" + lat);
+            Log.i(TAG, "json lon:" + lon);
+            Marker pin = this.googleMap.addMarker(new MarkerOptions().title(jsonObject.getString("name")).snippet(jsonObject.getString("Location")).position(position));
+            /* TODO: Potentially Dangerous */
+            pin.setTag(jsonObject.getInt("Tag"));
+
+        }
+
+
+    }
+
+
 
     /* ###################################
         FIRST TIME APP USER FUNCTION
@@ -228,7 +305,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     location = addressText.getText().toString();
                     if (location != null) {
                         Log.i(TAG, "location not null");
-                        if(!location.matches("")) {
+                        if (!location.matches("")) {
                             Log.i(TAG, "location not empty space");
                             onSearchLocation(location);
 
@@ -376,9 +453,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /* ###################################
        GET UPDATED ADDRESS FUNCTION
    ###################################*/
-    private void callGeofence(){
-        if(!loadPrefs("MyLatitude", null).equals(null)){
-            if(!loadPrefs("MyLongitude", null).equals(null)){
+    private void callGeofence() {
+        if (!loadPrefs("MyLatitude", null).equals(null)) {
+            if (!loadPrefs("MyLongitude", null).equals(null)) {
 
                 double loadLat = Double.parseDouble(loadPrefs("MyLatitude", null));
                 double loadLng = Double.parseDouble(loadPrefs("MyLongitude", null));
@@ -386,12 +463,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 /* Implementation of the whole GeoFence Lies here */
                 LatLng home = new LatLng(loadLat, loadLng);
 
-                if(geoFenceMarker != null){
+                if (geoFenceMarker != null) {
                     Log.i(TAG, "Geofence marker not null");
                     clearGeofence();
                 }
 
-                if(geoFenceMarker == null) {
+                if (geoFenceMarker == null) {
                     Log.i(TAG, "Geofence marker is null");
                     markerForGeofence(home);
                     startGeofence();
@@ -404,9 +481,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private void setMyUpdatedGeoFence() {
 
-        /* TODO: THIS is pending for working condition */
+        /* TODO: THIS is in working condition */
         Intent intent = getIntent();
-        if(intent.hasExtra("myLat")) {
+        if (intent.hasExtra("myLat")) {
             /* If there is no latitude to get in the first place then there is no point
                 in getting the longitude which in turns means is useless to even create a geofence */
 
@@ -430,12 +507,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             /* Implementation of the whole GeoFence Lies here */
             LatLng home = new LatLng(myLat, myLng);
 
-            if(geoFenceMarker != null){
+            if (geoFenceMarker != null) {
                 Log.i(TAG, "Geofence marker not null");
                 clearGeofence();
             }
 
-            if(geoFenceMarker == null) {
+            if (geoFenceMarker == null) {
                 Log.i(TAG, "Geofence marker is null");
                 markerForGeofence(home);
                 startGeofence();
@@ -582,7 +659,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         }
                     });
         } else
-            Log.i(TAG,"Permission for addGeofence is false" );
+            Log.i(TAG, "Permission for addGeofence is false");
     }
 
     /* Remove Geofence and stop monitoring */
@@ -705,14 +782,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         try {
             // Time Check for night
             if ((getCurrentTime() < 24 && getCurrentTime() > 17) || (getCurrentTime() >= 0 && getCurrentTime() < 7)) {
-                boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_night));
+                boolean success = this.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_night));
 
                 if (!success) {
                     Log.e(TAG, "Style parsing failed.");
                 }
             } else {
                 // Time for morning
-                boolean success = googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_morning));
+                boolean success = this.googleMap.setMapStyle(MapStyleOptions.loadRawResourceStyle(this, R.raw.map_style_morning));
 
                 if (!success) {
                     Log.e(TAG, "Style parsing failed.");
@@ -753,8 +830,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             if (locationResult.getLastLocation() == null)
                 return;
             currentLocation = locationResult.getLastLocation();
+            savePrefs("CurrentLatitude", Double.toString(currentLocation.getLatitude()));
+            savePrefs("CurrentLongitude", Double.toString(currentLocation.getLongitude()));
+            /* TODO: TO BE DELETED AFTER BETA TESTING */
+            Log.i(TAG, "Current Lat:" + Double.toString(currentLocation.getLatitude()));
+            Log.i(TAG, "Current Lng:" + Double.toString(currentLocation.getLongitude()));
             if (firstTimeFlag && googleMap != null) {
                 rotatoE = "n";
+
                 animateCamera(currentLocation);
                 firstTimeFlag = false;
             }
@@ -763,24 +846,169 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     };
 
     /* #################################################
-           FINDING THE CLOSEST WATER COOLER FUNCTIONS
+           FINDING CLOSEST WATER COOLER FUNCTIONS
        #################################################*/
 
-    private void findClosestWaterCooler(){
+    private void findClosestWaterCooler() {
+        try {
+            InputStream inputStream = getAssets().open("water_coolers.json");
+            int size = inputStream.available();
+            byte[] buffer = new byte[size];
+            inputStream.read(buffer);
+            inputStream.close();
 
+            json = new String(buffer, "UTF-8");
+            JSONArray jsonArray = new JSONArray(json);
 
+            for (int i = 0; i < jsonArray.length(); i++) {
+
+                // Create a marker for each city in the JSON data.
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                /* Get the latLong of each water cooler */
+                double lat = jsonObject.getJSONArray("latlng").getDouble(0);
+                double lon = jsonObject.getJSONArray("latlng").getDouble(1);
+
+                LatLng position = new LatLng(lat, lon);
+                Log.i(TAG, "json lat:" + lat);
+                Log.i(TAG, "json lon:" + lon);
+                Marker currentMarker = this.googleMap.addMarker(new MarkerOptions().title(jsonObject.getString("name")).snippet(jsonObject.getString("Location")).position(position));
+                /* TODO: Potentially Dangerous */
+                currentMarker.setTag(jsonObject.getInt("Tag"));
+                currentMarker.setVisible(false);
+
+                /* TODO: Delete LOG after beta testing */
+                if (!loadPrefs("CurrentLatitude", null).equals(null)) {
+                    Log.i(TAG, "CurrentLatitude for json is not null");
+
+                    if (!loadPrefs("CurrentLongitude", null).equals(null)) {
+                        Log.i(TAG, "CurrentLongitude for json is not null");
+
+                        gpsLat = Double.parseDouble(loadPrefs("CurrentLatitude", null));
+                        gpsLon = Double.parseDouble(loadPrefs("CurrentLongitude", null));
+
+                        Log.i(TAG, "CurrentLatitude for json is :" + gpsLat);
+                        Log.i(TAG, "CurrentLongitude for json is :" + gpsLon);
+
+                    }
+                }
+
+                float[] distance = new float[1];
+                Log.i(TAG, "Going to run cal on location distance between");
+                Location.distanceBetween(gpsLat, gpsLat, lat, lon, distance);
+                if (i == 0) {
+                    mindist = distance[0];
+                    mClosestMarker = currentMarker;
+                    Log.i(TAG, "Going running cal on existencing");
+
+                } else if (mindist > distance[0]) {
+                    mindist = distance[0];
+                    mClosestMarker = currentMarker;
+                    Log.i(TAG, "Going running cal on location distance between");
+
+                }
+            }
+            /* SET THE DIALOG HERE */
+            AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+            final View view = getLayoutInflater().inflate(R.layout.display_watercooler, null);
+            final TextView waterName = view.findViewById(R.id.watercooler_name);
+            final TextView waterLoc = view.findViewById(R.id.watercooler_location);
+            final ImageView waterPic = view.findViewById(R.id.watercooler_image);
+
+            int position = (int) mClosestMarker.getTag();
+
+            switch(position){
+                case 1: waterName.setText(mClosestMarker.getTitle());
+                    waterLoc.setText(mClosestMarker.getSnippet());
+                    waterPic.setImageResource(R.drawable.t12a_boys_toilet);
+                    break;
+
+                case 2: waterName.setText(mClosestMarker.getTitle());
+                    waterLoc.setText(mClosestMarker.getSnippet());
+                    waterPic.setImageResource(R.drawable.t12a_girls_toilet);
+                    break;
+
+                case 3: waterName.setText(mClosestMarker.getTitle());
+                    waterLoc.setText(mClosestMarker.getSnippet());
+                    waterPic.setImageResource(R.drawable.below_spectrum);
+                    break;
+            }
+
+            builder.setView(view);
+            final AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+            Toast.makeText(this, "Closest Water Cooler Distance: " + mClosestMarker.getTitle(), Toast.LENGTH_LONG).show();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+            Log.i(TAG, "Createmarkers with json has error");
+        }
     }
+
+
+
 
      /* #################################################
                 ON CLICK LISTENER FUNCTIONS
        #################################################*/
+
+    private void spawnAlertDialogforWaterCooler(){
+        this.googleMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                Log.i(TAG, "I am being cliked");
+                AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+                final View view = getLayoutInflater().inflate(R.layout.display_watercooler, null);
+                final TextView waterName = view.findViewById(R.id.watercooler_name);
+                final TextView waterLoc = view.findViewById(R.id.watercooler_location);
+                final ImageView waterPic = view.findViewById(R.id.watercooler_image);
+
+                if(marker.getTag() == null)
+                    return true;
+
+                int position = (int) marker.getTag();
+
+
+                switch(position){
+                    case 1: waterName.setText(marker.getTitle());
+                            waterLoc.setText(marker.getSnippet());
+                            waterPic.setImageResource(R.drawable.t12a_boys_toilet);
+                            break;
+
+                    case 2: waterName.setText(marker.getTitle());
+                            waterLoc.setText(marker.getSnippet());
+                            waterPic.setImageResource(R.drawable.t12a_girls_toilet);
+                            break;
+
+                    case 3: waterName.setText(marker.getTitle());
+                            waterLoc.setText(marker.getSnippet());
+                            waterPic.setImageResource(R.drawable.below_spectrum);
+                            break;
+
+                }
+
+
+
+
+                builder.setView(view);
+                final AlertDialog alertDialog = builder.create();
+                alertDialog.show();
+                return false;
+            }
+        });
+
+
+
+    }
 
     private View.OnClickListener closestWaterCooler = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             findClosestWaterCooler();
         }
-    } ;
+    };
 
     private final View.OnClickListener myCurrentLocation = new View.OnClickListener() {
         @Override
