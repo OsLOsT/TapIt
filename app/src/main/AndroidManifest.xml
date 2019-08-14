@@ -45,6 +45,8 @@
             android:name=".AiActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
 
+        <service android:enabled="true" android:name=".GeofenceTransitionService"/>
+
 
     </application>
 

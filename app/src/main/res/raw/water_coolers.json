@@ -1,0 +1,26 @@
+[
+  {
+    "name": "T12A Boys Toilet",
+    "latlng": [
+      1.3109,
+      103.7784
+    ],
+    "picture": "R.raw.t12a_boys_toilet"
+  },
+  {
+    "name": "T12A Girls Toilet",
+    "latlng": [
+      1.3102,
+      103.7784
+    ],
+    "picture": "132"
+  },
+  {
+    "name": "Below Spectrum",
+    "latlng": [
+      1.3102,
+      103.7785
+    ],
+    "picture": "R.raw.below_spectrum"
+  }
+]

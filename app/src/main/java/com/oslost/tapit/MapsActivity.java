@@ -2,6 +2,7 @@ package com.oslost.tapit;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -16,6 +17,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,6 +27,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -61,7 +66,9 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import java.io.IOException;
 import java.util.Calendar;
+import java.util.List;
 
 import static com.google.android.gms.location.Geofence.NEVER_EXPIRE;
 
@@ -78,16 +85,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private String bLng;
     private String bLat;
 
+    /* On Search Variables */
+    private String location;
+
     /* Geofence Variables */
     private GeofencingClient geofencingClient;
     private Marker geoFenceMarker;
     private Marker searchMarker;
     private static final long GEO_DURATION = NEVER_EXPIRE;
     private static final String GEOFENCE_REQ_ID = "Your Destination";
-    private static final float GEOFENCE_RADIUS = 20.0f; // in meters
+    private static final float GEOFENCE_RADIUS = 100.0f; // in meters
     private static final int ME_WANT_NO_INITIAL_TRIGGER = 0;
     private boolean checkPermission = false;
-    private String geofenceallowed = "n";
+    //private String geofenceallowed = "n";
 
     /* GeoFence Pending Intent Variables */
     private PendingIntent geoFencePendingIntent;
@@ -120,6 +130,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
        ################################################################# */
 
+        /* #############################################################
+            set Geofence inital trigger : Geofence.GEOFENCE_TRANSITION_ENTER
+            when you want to show the teacher a notification will appear
+
+            or else just use default which is
+            default: ME_WANT_NO_INITIAL_TRIGGER
+          ############################################################# */
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,7 +158,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         findViewById(R.id.compassEnableButton).setOnClickListener(compass);
 
         /* Set Listener for the current location button */
-        findViewById(R.id.currentLocationImageButton).setOnClickListener(clickListener);
+        findViewById(R.id.currentLocationImageButton).setOnClickListener(myCurrentLocation);
+
+        /* Set Listner for the closest water cooler */
+        findViewById(R.id.closest_waterCooler).setOnClickListener(closestWaterCooler);
 
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mRotVectSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
@@ -164,19 +185,80 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         /* Check if it is first time user */
         setUpAddress();
 
-        /* Setting up Geofence */
-        setMyGeoFence();
+        /* Setting up Updated Geofence */
+        setMyUpdatedGeoFence();
 
-        /* Style the map */
-        styleMyMap();
+        /* Calling Geofence */
+        callGeofence();
 
         /* Ground Overlay of SP */
-        groundOverLaySP(this.googleMap);
+        groundOverLaySP();
 
-        /*TODO: PLEASE DELETE THIS AFTER BETA TESTING */
+        /* TODO: DELETE LATER */
         //testingMyStuff();
 
 
+    }
+
+    /* ###################################
+        FIRST TIME APP USER FUNCTION
+       ###################################*/
+
+    private void setUpAddress() {
+        /* Run this function only and IF ONLY the user really launch the app for the first time */
+        if (loadPrefs("FirstTime", true)) {
+            savePrefs("FirstTime", false);
+
+            /* If is first time using app */
+            //POP OUT THE DIALOG WINDOW
+            AlertDialog.Builder builder = new AlertDialog.Builder(MapsActivity.this);
+            final View view = getLayoutInflater().inflate(R.layout.first_time_add_address, null);
+            final EditText addressText = view.findViewById(R.id.new_address_text);
+            Button addressButton = view.findViewById(R.id.new_address_button);
+
+            builder.setView(view);
+            final AlertDialog alertDialog = builder.create();
+            alertDialog.show();
+            alertDialog.setCancelable(false);
+            alertDialog.setCanceledOnTouchOutside(false);
+
+            addressButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    location = addressText.getText().toString();
+                    if (location != null) {
+                        Log.i(TAG, "location not null");
+                        if(!location.matches("")) {
+                            Log.i(TAG, "location not empty space");
+                            onSearchLocation(location);
+
+                            Bundle putLatLng = new Bundle();
+                            putLatLng.putString("myLat", loadPrefs("MyLatitude", null));
+                            putLatLng.putString("myLng", loadPrefs("MyLongitude", null));
+
+                            Log.i(TAG, "myLat: " + loadPrefs("MyLatitude", null));
+                            Log.i(TAG, "myLng:" + loadPrefs("MyLongitude", null));
+
+                            Intent mapIntent = new Intent(getApplicationContext(), MapsActivity.class);
+                            mapIntent.putExtras(putLatLng);
+
+                            mapIntent.putExtra("myLat", loadPrefs("MyLatitude", null));
+                            mapIntent.putExtra("myLng", loadPrefs("MyLongitude", null));
+                            /* TODO: DELETE THIS AFTER BETA TESTING */
+                            /* THIS PART OF THE CODE WORKS */
+                            Log.i(TAG, "Put Extra for intent done");
+                            startActivity(mapIntent);
+                            alertDialog.dismiss();
+                        }
+                    } else
+                        Log.i(TAG, "location in setting up new address is null");
+
+                }
+            });
+        } else {
+
+            Log.i(TAG, "Welcome");
+        }
     }
 
 
@@ -230,113 +312,139 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
-    /* ###################################
-        FIRST TIME APP USER FUNCTION
-       ###################################*/
 
-    private void setUpAddress() {
-        /*TODO: IMPT SET ADDDRESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS*/
-        /* Run this function only and IF ONLY the user really launch the app for the first time */
-        if (loadPrefs("FirstTime", true)) {
-            savePrefs("FirstTime", false);
-            //savePrefs("MyLocationName", /*Gettext from textedit*/);
-            /* If is first time using app */
-            //POP OUT THE DIALOG WINDOW
-            FirstTimeUserDialog firstTimeUserDialog = new FirstTimeUserDialog();
-            firstTimeUserDialog.show(getSupportFragmentManager(), "First Time Dialog");
 
-        } else {
-            Toast.makeText(getApplicationContext(), "Welcome!", Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "Welcome");
+    /* ###########################
+            GEOCODE FUNCTION
+       ###########################*/
+
+    public void onSearchLocation(String location) {
+
+        if (location != null) {
+            savePrefs("MyLocationName", location.toUpperCase());
+
+            List<Address> addressList = null;
+            if (location != null || !location.equals("")) {
+                Geocoder geocoder = new Geocoder(this);
+                try {
+
+                    addressList = geocoder.getFromLocationName(location, 1);
+                    if (addressList != null) {
+                        addressList = geocoder.getFromLocationName(location, 1);
+                        Log.i(TAG, "onSearchLocation() is null 1");
+
+                    } else {
+                        addressList = null;
+                        Toast.makeText(this, "Location does not exist,please enter something else.", Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "onSearchLocation() is null 2");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Location does not exist,please enter something else.", Toast.LENGTH_SHORT).show();
+
+
+                }
+                if (addressList.size() > 0) {
+
+                    Address address = addressList.get(0);
+                    String show = "Latitude: " + address.getLatitude() + "\nLongitude: " + address.getLongitude();
+                    Toast.makeText(getApplicationContext(), address.getLatitude() + " " + address.getLongitude(), Toast.LENGTH_LONG).show();
+
+                    /* Store the updated address into the static variable */
+                    showLocation.edit().putString("MyLatitude", String.valueOf(address.getLatitude())).apply();
+                    showLocation.edit().putString("MyLongitude", String.valueOf(address.getLongitude())).apply();
+                    Log.i(TAG, "onSearchLocation() is null 3");
+
+                } else {
+                    Toast.makeText(this, "Location does not exist, please enter something else.", Toast.LENGTH_SHORT).show();
+                    Log.i(TAG, "onSearchLocation() is null 4");
+                }
+            }
         }
     }
+
+
 
     /* ###################################
         MY PERSONAL TESTING FUNCTION
        ###################################*/
 
     private void testingMyStuff() {
-         /* LatLng sp = new LatLng(1.3099, 103.7775);
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sp,16)); */
-        if (loadPrefs("MyLatitude", null) != null) {
-            myLat = Double.parseDouble(loadPrefs("MyLatitude", null));
-            Toast.makeText(getApplicationContext(), "myLat:" + myLat, Toast.LENGTH_LONG).show();
-            Log.i(TAG, "brianishereLatS:" + loadPrefs("MyLatitude", null));
-        } else {
-            Toast.makeText(getApplicationContext(), "It is null", Toast.LENGTH_LONG).show();
-            Log.i(TAG, "NULLL");
-        }
 
-        if (loadPrefs("MyLongitude", null) != null) {
-            myLng = Double.parseDouble(loadPrefs("MyLongitude", null));
-            Toast.makeText(getApplicationContext(), "myLng:" + myLng, Toast.LENGTH_LONG).show();
-            Log.i(TAG, "brianishereLngS:" + loadPrefs("MyLongitude", null));
-
-        } else {
-            Toast.makeText(getApplicationContext(), "It is null", Toast.LENGTH_LONG).show();
-            Log.i(TAG, "NULLL");
-        }
-
-        LatLng current = new LatLng(myLat, myLng);
-
-        if (current != null) {
-            this.googleMap.addMarker(new MarkerOptions().position(current).title("Brian is in SP"));
-            //this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(current, 16));
-            Log.i(TAG, "WORKING BRIAN IS KAMI SAMA");
-        }
     }
 
     /* ###################################
        GET UPDATED ADDRESS FUNCTION
    ###################################*/
-    private void setMyGeoFence() {
-        getMyLatLng = getIntent().getExtras();
-        bLat = getMyLatLng.getString("myLat");
-        bLng = getMyLatLng.getString("myLng");
+    private void callGeofence(){
+        if(!loadPrefs("MyLatitude", null).equals(null)){
+            if(!loadPrefs("MyLongitude", null).equals(null)){
 
-        /* Null checker for latitude */
-        if (bLat != null) {
-            myLat = Double.parseDouble(bLat);
-            /* TODO: TO DELETE THE TOAST */
-            Toast.makeText(getApplicationContext(), "myLat:" + myLat, Toast.LENGTH_LONG).show();
-            Log.i(TAG, "brianishereLatS:" + loadPrefs("MyLatitude", null));
-        } else {
-            Toast.makeText(getApplicationContext(), "It is null", Toast.LENGTH_LONG).show();
-            Log.i(TAG, "NULLL");
+                double loadLat = Double.parseDouble(loadPrefs("MyLatitude", null));
+                double loadLng = Double.parseDouble(loadPrefs("MyLongitude", null));
+
+                /* Implementation of the whole GeoFence Lies here */
+                LatLng home = new LatLng(loadLat, loadLng);
+
+                if(geoFenceMarker != null){
+                    Log.i(TAG, "Geofence marker not null");
+                    clearGeofence();
+                }
+
+                if(geoFenceMarker == null) {
+                    Log.i(TAG, "Geofence marker is null");
+                    markerForGeofence(home);
+                    startGeofence();
+                    Log.i(TAG, "bL Geofence created");
+                }
+
+            }
         }
+    }
 
-        /* Null checker for longitude */
-        if (bLng != null) {
-            myLng = Double.parseDouble(bLng);
-            /* TODO: TO DELETE THE TOAST */
-            Toast.makeText(getApplicationContext(), "myLng:" + myLng, Toast.LENGTH_LONG).show();
-            Log.i(TAG, "brianishereLngS:" + loadPrefs("MyLongitude", null));
+    private void setMyUpdatedGeoFence() {
 
-        } else {
-            Toast.makeText(getApplicationContext(), "It is null", Toast.LENGTH_LONG).show();
-            Log.i(TAG, "NULL");
-        }
+        /* TODO: THIS is pending for working condition */
+        Intent intent = getIntent();
+        if(intent.hasExtra("myLat")) {
+            /* If there is no latitude to get in the first place then there is no point
+                in getting the longitude which in turns means is useless to even create a geofence */
+
+            getMyLatLng = getIntent().getExtras();
+            if (!getMyLatLng.getString("myLat").equals(null)) {
+                bLat = getMyLatLng.getString("myLat");
+                myLat = Double.parseDouble(bLat);
+                Log.i(TAG, "bLat:" + myLat);
+            }
 
 
-        if (bLat != null && bLng != null) {
-            /* Removing existing Geofence */
-            clearGeofence();
+            if (intent.hasExtra("myLng")) {
+                getMyLatLng = getIntent().getExtras();
+                if (!getMyLatLng.getString("myLng").equals(null)) {
+                    bLng = getMyLatLng.getString("myLng");
+                    myLng = Double.parseDouble(bLng);
+                    Log.i(TAG, "bLng:" + myLng);
+                }
+            }
 
             /* Implementation of the whole GeoFence Lies here */
             LatLng home = new LatLng(myLat, myLng);
 
-            /* Add a marker add the home */
-            markerForGeofence(home);
-            drawGeofence();
+            if(geoFenceMarker != null){
+                Log.i(TAG, "Geofence marker not null");
+                clearGeofence();
+            }
 
-            /* Adding Geofence */
-            startGeofence();
+            if(geoFenceMarker == null) {
+                Log.i(TAG, "Geofence marker is null");
+                markerForGeofence(home);
+                startGeofence();
+                Log.i(TAG, "bL Geofence created");
+            }
 
 
-        } else {
-            Toast.makeText(getApplicationContext(), "Did nothing for geofencing", Toast.LENGTH_SHORT).show();
-            Log.i(TAG, "Did nothing for geofencing");
         }
+
 
     }
 
@@ -360,6 +468,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 geoFenceMarker.remove();
 
             geoFenceMarker = this.googleMap.addMarker(markerOptions);
+
+            Log.i(TAG, "markerForGeofence(" + latLng + ") HAS FINISH DRAWING");
 
         }
     }
@@ -387,6 +497,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             geoFenceMarker.remove();
         if (geoFenceLimits != null)
             geoFenceLimits.remove();
+        Log.i(TAG, "removeGeofenceDraw() FINISHED");
     }
 
      /* #############################
@@ -400,14 +511,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Geofence geofence = createGeofence(geoFenceMarker.getPosition(), GEOFENCE_RADIUS);
             GeofencingRequest geofenceRequest = createGeofenceRequest(geofence);
             addGeofence(geofenceRequest);
-            Toast.makeText(this, "Your Home is set", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Your Home is set", Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "startGeoFence Your Home is set");
         } else {
             Toast.makeText(this, "Your Home is null", Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Geofence marker is null");
+            Log.i(TAG, "Geofence marker is null");
         }
     }
-
-
 
 
     /* #############################
@@ -451,7 +561,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private void addGeofence(GeofencingRequest request) {
         Log.i(TAG, "addGeofence");
 
-        if (checkPermission) {
+        if (checkPermission()) {
             /* Permission checking is done by its own function at the bottom */
             geofencingClient.addGeofences(request, createGeofencePendingIntent())
                     .addOnSuccessListener(this, new OnSuccessListener<Void>() {
@@ -471,7 +581,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             Log.i(TAG, "GeoFence failed to be created");
                         }
                     });
-        }
+        } else
+            Log.i(TAG,"Permission for addGeofence is false" );
     }
 
     /* Remove Geofence and stop monitoring */
@@ -483,7 +594,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onSuccess(Void aVoid) {
                         /* TODO: DELETE THIS LATER AFTER BETA TESTING */
                         Log.i(TAG, "Geofence Removed");
-                        Toast.makeText(context, "Geofence Removed", Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context, "Geofence Removed", Toast.LENGTH_SHORT).show();
                         removeGeofenceDraw();
                     }
                 })
@@ -651,11 +762,27 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     };
 
+    /* #################################################
+           FINDING THE CLOSEST WATER COOLER FUNCTIONS
+       #################################################*/
+
+    private void findClosestWaterCooler(){
+
+
+    }
+
      /* #################################################
                 ON CLICK LISTENER FUNCTIONS
        #################################################*/
 
-    private final View.OnClickListener clickListener = new View.OnClickListener() {
+    private View.OnClickListener closestWaterCooler = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            findClosestWaterCooler();
+        }
+    } ;
+
+    private final View.OnClickListener myCurrentLocation = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             rotatoE = "n";
@@ -708,14 +835,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /* ################################################
          GROUND OVER LAY SP MAP FUNCTION [NOT WORKING]
      ##################################################*/
-    private void groundOverLaySP(GoogleMap googleMap) {
+    private void groundOverLaySP() {
 
         BitmapDescriptor spBitmap = BitmapDescriptorFactory.fromResource(R.raw.resizedmap);
 
-        LatLng southWest = new LatLng(1.1826, 103.4619);
-        LatLng NorthEast = new LatLng(1.1842, 103.4657);
+        LatLng southWest = new LatLng(01.3072833, 103.7722194/*1.1826, 103.4619*/);
+        LatLng northEast = new LatLng(01.3119111, 103.7827639/*1.1842, 103.4657*/);
 
-        LatLngBounds latLngBounds = new LatLngBounds(southWest, NorthEast);
+
+        LatLngBounds latLngBounds = new LatLngBounds(southWest, northEast);
 
         GroundOverlayOptions groundOverlayOptions = new GroundOverlayOptions();
         groundOverlayOptions.positionFromBounds(latLngBounds);
@@ -724,7 +852,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         groundOverlayOptions.transparency(0.2f);
         groundOverlayOptions.visible(true);
 
-        //googleMap.addGroundOverlay(groundOverlayOptions);
+        this.googleMap.addGroundOverlay(groundOverlayOptions);
 
 
     }
@@ -732,7 +860,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     /* ######################################
                 CHECK PERMISSION FUNCTION
        ######################################*/
-
+    private boolean checkPermission() {
+        Log.d(TAG, "checkPermission()");
+        // Ask for permission if it wasn't granted yet
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED);
+    }
 
     /* Checking function is used on onResume */
     private boolean isGooglePlayServicesAvailable() {
@@ -753,10 +886,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         if (requestCode == MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION) {
             if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
                 Toast.makeText(this, "Permission denied by uses", Toast.LENGTH_SHORT).show();
-                checkPermission = false;
+
             } else if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 startCurrentLocationUpdates();
-                checkPermission = true;
             }
 
         }
@@ -846,8 +978,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.CancelableCallback cancelableCallback = new GoogleMap.CancelableCallback() {
             @Override
             public void onFinish() {
-                rotatoE = "y";
-                yes();
+                rotatoE = "n";
+                no();
             }
 
             @Override

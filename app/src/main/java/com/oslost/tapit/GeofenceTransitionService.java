@@ -35,6 +35,7 @@ public class GeofenceTransitionService extends IntentService {
     private static final String CHANNEL_ID = "my_channel_01";// The id of the channel.
     private int notifyID = 1;
     private static final int importance = NotificationManager.IMPORTANCE_HIGH;
+    private  NotificationManager notificationManager;
 
     public GeofenceTransitionService() {
         super(TAG);
@@ -65,7 +66,7 @@ public class GeofenceTransitionService extends IntentService {
 
             /* Send notification details as a String */
             sendNotification(geofenceTransitionDetails);
-            Log.i(TAG, geofenceTransitionDetails);
+            Log.i(TAG, "Geofence transition:" + geofenceTransitionDetails);
         }else {
             // Log the error.
             Log.e(TAG, "Geofence Transition invalid type");
@@ -86,7 +87,9 @@ public class GeofenceTransitionService extends IntentService {
 
         status = null;
         if (geoFenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER) {
-            /*TODO: DELETE THIS LATER */
+            /*TODO: DELETE THIS LATER STRICTLY FOR BETA TESTING*/
+
+            status = "You are already home! ";
             Toast.makeText(this, "You entered your home", Toast.LENGTH_SHORT).show();
             Log.i(TAG, "GEOFENCE IS ENTERING");
 
@@ -118,22 +121,23 @@ public class GeofenceTransitionService extends IntentService {
         PendingIntent notificationPendingIntent = stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
 
-        /* Creating and sending Notification */
-        NotificationManager notificationMng = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        notificationMng.notify(GEOFENCE_NOTIFICATION_ID, createNotification(msg, notificationPendingIntent));
-    }
-
-
-    private Notification createNotification(String msg, PendingIntent notificationPendingIntent) {
-
         CharSequence name = "name";// The user-visible name of the channel.
 
         /* Check for the minimum API level to assign notification Channel */
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
+            /* Creating and sending Notification */
+            notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(mChannel);
         }
 
+        notificationManager.notify(GEOFENCE_NOTIFICATION_ID, createNotification(msg, notificationPendingIntent));
+
+
+    }
+
+
+    private Notification createNotification(String msg, PendingIntent notificationPendingIntent) {
 
         Log.i(TAG, "NOTIFICATION IS WORKING");
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, CHANNEL_ID);
@@ -144,6 +148,7 @@ public class GeofenceTransitionService extends IntentService {
                 .setContentText("Good Job!")
                 .setContentIntent(notificationPendingIntent)
                 .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_VIBRATE | Notification.DEFAULT_SOUND)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true)
                 .setChannelId(CHANNEL_ID);
         return notificationBuilder.build();
