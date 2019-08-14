@@ -9,10 +9,11 @@
     </style>
 
     <!-- Spash Screen Theme -->
-    <style name="SpashScreenTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="SpashScreenTheme" parent="AppTheme">
         <item name="android:windowBackground">@drawable/spash_screen_icon</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
         <item name="android:statusBarColor">@color/belizeHole</item>
     </style>
 
